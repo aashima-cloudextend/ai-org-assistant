@@ -54,52 +54,84 @@ function QueryForm() {
 
   return (
     <div className="query-form">
-      <h2>Ask a Question</h2>
+      <div className="form-header">
+        <h2>
+          <span className="header-icon">🧠</span>
+          Query CEIRA
+        </h2>
+        <p className="form-subtitle">Ask anything about your organization's knowledge base</p>
+      </div>
 
       <div className="form-section">
-        <label className="section-label">👤 User Role</label>
+        <label className="section-label">
+          <span className="label-icon">👤</span>
+          Select Your Role
+        </label>
         <select 
           value={userRole} 
           onChange={(e) => setUserRole(e.target.value)}
-          className="select-input"
+          className="select-input futuristic-select"
         >
-          <option value="developer">Developer</option>
-          <option value="support">Support</option>
-          <option value="manager">Manager</option>
-          <option value="general">General</option>
+          <option value="developer">🔧 Developer</option>
+          <option value="support">🎧 Support Engineer</option>
+          <option value="manager">📊 Manager</option>
+          <option value="general">🌐 General User</option>
         </select>
       </div>
 
       <div className="form-section">
-        <label className="section-label">💭 Your Question</label>
-        <textarea
-          placeholder="e.g., How does the NetSuite to Outlook sync work?&#10;&#10;Tip: Press Ctrl+Enter to submit"
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          onKeyPress={handleKeyPress}
-          className="textarea-input question-textarea"
-          rows="6"
-        />
+        <label className="section-label">
+          <span className="label-icon">💭</span>
+          Your Question
+        </label>
+        <div className="textarea-container">
+          <textarea
+            placeholder="Type your question here... (Ctrl+Enter to submit)"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            onKeyPress={handleKeyPress}
+            className="textarea-input question-textarea futuristic-textarea"
+            rows="6"
+          />
+          <div className="textarea-glow"></div>
+        </div>
       </div>
 
       <button 
-        className="query-button"
+        className={`query-button ${loading ? 'loading' : ''}`}
         onClick={handleQuery}
         disabled={loading}
       >
-        {loading ? '🤔 Thinking...' : '🚀 Ask Question'}
+        <span className="button-content">
+          {loading ? (
+            <>
+              <span className="spinner"></span>
+              <span>CEIRA is thinking...</span>
+            </>
+          ) : (
+            <>
+              <span className="button-icon">⚡</span>
+              <span>Ask CEIRA</span>
+            </>
+          )}
+        </span>
+        <div className="button-glow"></div>
       </button>
 
       {error && (
         <div className="error-message">
-          ❌ {error}
+          ⚠️ {error}
         </div>
       )}
 
       {result && (
         <div className="result-box">
           <div className="answer-section">
-            <h3>🤖 Answer</h3>
+            <h3>
+              <span className="section-icon">🤖</span>
+              CEIRA's Response
+              <span className="ai-badge">AI</span>
+            </h3>
             <div className="answer-content">
               {result.answer}
             </div>
@@ -118,7 +150,10 @@ function QueryForm() {
 
           {result.sources && result.sources.length > 0 && (
             <div className="sources-section">
-              <h3>📚 Sources ({result.sources.length})</h3>
+              <h3>
+                <span className="section-icon">📚</span>
+                Knowledge Sources ({result.sources.length})
+              </h3>
               <div className="sources-list">
                 {result.sources.map((source, index) => (
                   <div key={index} className="source-item">
@@ -130,7 +165,7 @@ function QueryForm() {
                         {' ' + source.type}
                       </span>
                       <span className="source-similarity">
-                        Similarity: {Math.abs(source.similarity_score)?.toFixed(2)}
+                        Match: {Math.abs(source.similarity_score)?.toFixed(2)}
                       </span>
                     </div>
                     <div className="source-title">
@@ -143,16 +178,19 @@ function QueryForm() {
                         rel="noopener noreferrer"
                         className="source-link"
                       >
-                        🔗 View Source
+                        <span>🔗</span>
+                        <span>View Source</span>
                       </a>
                     )}
                     {source.repository && (
                       <div className="source-meta">
+                        <span className="meta-icon">📦</span>
                         Repository: {source.repository}
                       </div>
                     )}
                     {source.file_path && (
                       <div className="source-meta">
+                        <span className="meta-icon">📁</span>
                         Path: {source.file_path}
                       </div>
                     )}
@@ -164,7 +202,10 @@ function QueryForm() {
 
           {result.suggested_actions && result.suggested_actions.length > 0 && (
             <div className="suggestions-section">
-              <h3>💡 Suggested Actions</h3>
+              <h3>
+                <span className="section-icon">💡</span>
+                Suggested Actions
+              </h3>
               <ul className="suggestions-list">
                 {result.suggested_actions.map((action, index) => (
                   <li key={index}>{action}</li>
@@ -179,4 +220,3 @@ function QueryForm() {
 }
 
 export default QueryForm;
-

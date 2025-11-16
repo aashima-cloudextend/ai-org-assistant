@@ -1,70 +1,141 @@
-# Getting Started with Create React App
+# 🤖 CEIRA - CloudExtend Intelligence & Response Assistant
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Futuristic UI for AI Organization Assistant
 
-## Available Scripts
+A stunning, modern React interface for CloudExtend's AI-powered knowledge assistant. Features glassmorphism design, animated gradients, and a cyberpunk-inspired color scheme.
 
-In the project directory, you can run:
+## 🎨 Design Features
 
-### `npm start`
+- **Animated Background**: Dynamic gradient orbs and animated grid overlay
+- **Cursor Glow Effect**: Interactive mouse-tracking glow effect
+- **Glassmorphism**: Frosted glass effect with backdrop blur
+- **Neon Accents**: Cyan (#00f2ff), Purple (#7b2ff7), and Pink (#ff2e97) color scheme
+- **CloudExtend Branding**: Official CloudExtend blue and teal colors
+- **Smooth Animations**: Hover effects, transitions, and loading states
+- **Responsive Design**: Works beautifully on desktop, tablet, and mobile
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## 🚀 Quick Start
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Prerequisites
 
-### `npm test`
+- Node.js 14+ and npm
+- Backend server running on `http://localhost:8000`
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Installation
 
-### `npm run build`
+```bash
+cd ai-assistant-ui
+npm install
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Development Mode
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+npm start
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+The app will open at `http://localhost:3000`
 
-### `npm run eject`
+### Production Build
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```bash
+npm run build
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 🎯 Features
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### 1. Query CEIRA Intelligence
+- **Natural Language Queries**: Ask questions in plain English
+- **Role-Based Responses**: Tailored answers for Developers, Support, Managers, or General users
+- **Source Citations**: View relevant documents with similarity scores
+- **Confidence Scores**: See how confident CEIRA is in each response
+- **Processing Time**: Real-time performance metrics
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### 2. Sync Knowledge Base
+- **Multi-Source Support**: GitHub, Confluence, and Jira integration
+- **Path Filtering**: Include/exclude specific paths
+- **Real-Time Status**: Live updates during sync process
+- **Progress Tracking**: Monitor documents, chunks, and errors
 
-## Learn More
+## 🔧 Configuration
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+Update the API endpoint in the source files if your backend is not on `localhost:8000`:
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```javascript
+// In QueryForm.js and SyncForm.js
+const response = await fetch('http://YOUR_BACKEND_URL/query', {
+  // ...
+});
+```
 
-### Code Splitting
+## 🎨 Customization
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Color Scheme
 
-### Analyzing the Bundle Size
+Edit CSS variables in `App.css`:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```css
+:root {
+  --primary-cyan: #00f2ff;
+  --primary-purple: #7b2ff7;
+  --primary-pink: #ff2e97;
+  --cloudextend-blue: #0066cc;
+  --cloudextend-teal: #00b4d8;
+}
+```
 
-### Making a Progressive Web App
+### Fonts
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+The UI uses:
+- **Orbitron**: Futuristic headings and titles
+- **Inter**: Clean, modern body text
 
-### Advanced Configuration
+## 📱 Browser Support
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+- Chrome/Edge 90+
+- Firefox 88+
+- Safari 14+
 
-### Deployment
+## 🐛 Troubleshooting
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+### Backend Connection Issues
 
-### `npm run build` fails to minify
+If you see "Failed to connect to server" errors:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+1. Ensure the backend is running: `cd .. && python main.py`
+2. Check CORS settings in the backend
+3. Verify the API URL in fetch calls
+
+### Styling Issues
+
+If styles don't load correctly:
+
+1. Clear browser cache
+2. Delete `node_modules` and reinstall: `rm -rf node_modules && npm install`
+3. Check browser console for errors
+
+## 🏗️ Tech Stack
+
+- **React 18**: Modern UI framework
+- **CSS3**: Custom animations and effects
+- **Google Fonts**: Orbitron and Inter
+- **Fetch API**: REST communication with backend
+
+## 📄 License
+
+Part of the AI Organization Assistant project by CloudExtend.
+
+## 🤝 Contributing
+
+To contribute:
+
+1. Create a feature branch
+2. Make your changes
+3. Test thoroughly on different screen sizes
+4. Submit a pull request
+
+---
+
+**Built with ❤️ for CloudExtend**
+
+*CEIRA - Your intelligent assistant for organizational knowledge*

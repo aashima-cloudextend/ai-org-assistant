@@ -96,128 +96,183 @@ function SyncForm() {
 
   return (
     <div className="sync-form">
-      <h2>Sync Data Sources</h2>
+      <div className="form-header">
+        <h2>
+          <span className="header-icon">🔄</span>
+          Sync Knowledge Base
+        </h2>
+        <p className="form-subtitle">Update CEIRA's knowledge from your data sources</p>
+      </div>
 
       <div className="form-section">
-        <label className="section-label">📂 Data Sources</label>
+        <label className="section-label">
+          <span className="label-icon">📂</span>
+          Data Sources
+        </label>
         <div className="checkbox-group">
-          <label className="checkbox-label">
+          <label className={`checkbox-label futuristic-checkbox ${sources.github ? 'checked' : ''}`}>
             <input
               type="checkbox"
               checked={sources.github}
               onChange={() => handleSourceChange('github')}
             />
-            <span>GitHub</span>
+            <span className="checkbox-custom"></span>
+            <span className="checkbox-text">
+              <span className="checkbox-icon">💻</span>
+              GitHub
+            </span>
           </label>
-          <label className="checkbox-label">
+          <label className={`checkbox-label futuristic-checkbox ${sources.confluence ? 'checked' : ''}`}>
             <input
               type="checkbox"
               checked={sources.confluence}
               onChange={() => handleSourceChange('confluence')}
             />
-            <span>Confluence</span>
+            <span className="checkbox-custom"></span>
+            <span className="checkbox-text">
+              <span className="checkbox-icon">📄</span>
+              Confluence
+            </span>
           </label>
-          <label className="checkbox-label">
+          <label className={`checkbox-label futuristic-checkbox ${sources.jira ? 'checked' : ''}`}>
             <input
               type="checkbox"
               checked={sources.jira}
               onChange={() => handleSourceChange('jira')}
             />
-            <span>Jira</span>
+            <span className="checkbox-custom"></span>
+            <span className="checkbox-text">
+              <span className="checkbox-icon">🎫</span>
+              Jira
+            </span>
           </label>
         </div>
       </div>
 
       {sources.github && (
-        <div className="form-section">
-          <label className="section-label">🔗 Repositories</label>
+        <div className="form-section animated-section">
+          <label className="section-label">
+            <span className="label-icon">🔗</span>
+            GitHub Repositories
+          </label>
           <input
             type="text"
             placeholder="e.g., backend-services, frontend-app (comma-separated)"
             value={repositories}
             onChange={(e) => setRepositories(e.target.value)}
-            className="text-input"
+            className="text-input futuristic-input"
           />
         </div>
       )}
 
       {sources.confluence && (
-        <div className="form-section">
-          <label className="section-label">📚 Confluence Spaces</label>
+        <div className="form-section animated-section">
+          <label className="section-label">
+            <span className="label-icon">📚</span>
+            Confluence Spaces
+          </label>
           <input
             type="text"
             placeholder="e.g., PRP, DOCS (comma-separated)"
             value={spaces}
             onChange={(e) => setSpaces(e.target.value)}
-            className="text-input"
+            className="text-input futuristic-input"
           />
         </div>
       )}
 
       <div className="form-section">
-        <label className="section-label">✅ Include Paths (one per line)</label>
+        <label className="section-label">
+          <span className="label-icon">✅</span>
+          Include Paths (one per line)
+        </label>
         <textarea
           placeholder="e.g.,&#10;src/&#10;docs/&#10;README.md"
           value={includePaths}
           onChange={(e) => setIncludePaths(e.target.value)}
-          className="textarea-input"
+          className="textarea-input futuristic-textarea"
           rows="4"
         />
       </div>
 
       <div className="form-section">
-        <label className="section-label">❌ Exclude Paths (one per line)</label>
+        <label className="section-label">
+          <span className="label-icon">❌</span>
+          Exclude Paths (one per line)
+        </label>
         <textarea
           placeholder="e.g.,&#10;node_modules/&#10;tests/&#10;*.test.js"
           value={excludePaths}
           onChange={(e) => setExcludePaths(e.target.value)}
-          className="textarea-input"
+          className="textarea-input futuristic-textarea"
           rows="4"
         />
       </div>
 
       <button 
-        className="sync-button"
+        className={`sync-button ${loading ? 'loading' : ''}`}
         onClick={handleSync}
         disabled={loading}
       >
-        {loading ? '🔄 Syncing...' : '🚀 Start Sync'}
+        <span className="button-content">
+          {loading ? (
+            <>
+              <span className="spinner"></span>
+              <span>Syncing Data...</span>
+            </>
+          ) : (
+            <>
+              <span className="button-icon">🚀</span>
+              <span>Start Sync</span>
+            </>
+          )}
+        </span>
+        <div className="button-glow"></div>
       </button>
 
       {error && (
         <div className="error-message">
-          ❌ {error}
+          ⚠️ {error}
         </div>
       )}
 
       {result && (
         <div className="result-box">
-          <h3>Sync Status</h3>
+          <h3>
+            <span className="section-icon">📊</span>
+            Sync Status
+          </h3>
           <div className="status-grid">
             <div className="status-item">
               <span className="status-label">Status:</span>
               <span className={`status-value ${result.status}`}>
-                {result.status === 'running' && '⏳ Running'}
+                {result.status === 'running' && (
+                  <>
+                    <span className="status-spinner"></span>
+                    Running
+                  </>
+                )}
                 {result.status === 'completed' && '✅ Completed'}
                 {result.status === 'failed' && '❌ Failed'}
               </span>
             </div>
             <div className="status-item">
               <span className="status-label">Documents:</span>
-              <span className="status-value">{result.processed_documents || 0}</span>
+              <span className="status-value documents">{result.processed_documents || 0}</span>
             </div>
             <div className="status-item">
               <span className="status-label">Chunks:</span>
-              <span className="status-value">{result.total_chunks || 0}</span>
+              <span className="status-value chunks">{result.total_chunks || 0}</span>
             </div>
             <div className="status-item">
               <span className="status-label">Errors:</span>
-              <span className="status-value">{result.errors || 0}</span>
+              <span className="status-value errors">{result.errors || 0}</span>
             </div>
           </div>
           {result.message && (
             <div className="status-message">
-              💬 {result.message}
+              <span className="message-icon">💬</span>
+              {result.message}
             </div>
           )}
         </div>
@@ -227,4 +282,3 @@ function SyncForm() {
 }
 
 export default SyncForm;
-
