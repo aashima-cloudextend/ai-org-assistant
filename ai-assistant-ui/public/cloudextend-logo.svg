@@ -1,0 +1,48 @@
+<!-- CloudExtend Logo SVG - Blue Gradient Version -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 120" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="ceGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00b4d8;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#0099cc;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0066cc;stop-opacity:1" />
+    </linearGradient>
+    
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Large X shape in center -->
+  <g transform="translate(30, 20)">
+    <!-- Left stroke of X - much thicker -->
+    <path d="M 0 0 L 40 80" 
+          stroke="url(#ceGradient)" 
+          stroke-width="18" 
+          stroke-linecap="round" 
+          fill="none"
+          filter="url(#glow)"/>
+    
+    <!-- Right stroke of X - much thicker -->
+    <path d="M 80 0 L 40 80" 
+          stroke="url(#ceGradient)" 
+          stroke-width="18" 
+          stroke-linecap="round" 
+          fill="none"
+          filter="url(#glow)"/>
+  </g>
+  
+  <!-- CloudExtend Text -->
+  <text x="145" y="65" 
+        font-family="'Inter', 'Segoe UI', Arial, sans-serif" 
+        font-size="32" 
+        font-weight="700" 
+        fill="url(#ceGradient)" 
+        letter-spacing="2"
+        filter="url(#glow)">
+    CloudExtend
+  </text>
+</svg>
