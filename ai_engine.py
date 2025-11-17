@@ -326,6 +326,12 @@ class AIEngine:
     async def _retrieve_relevant_docs(self, query_context: QueryContext) -> List[Dict]:
         """Retrieve relevant documents based on query and role"""
         
+        logger.info(f"\n{'='*80}")
+        logger.info(f"RETRIEVING DOCUMENTS FOR QUERY")
+        logger.info(f"{'='*80}")
+        logger.info(f"Query: {query_context.query}")
+        logger.info(f"User Role: {query_context.user_role.value}")
+        
         # Search in role-specific collection first, then general
         results = await self.vector_store.search_similar(
             query=query_context.query,
@@ -335,11 +341,108 @@ class AIEngine:
             processor=self.document_processor
         )
         
+        logger.info(f"Initial retrieval: {len(results)} documents found")
+        
+        # Detect query type and apply source weighting
+        query_type = self._detect_query_type(query_context.query)
+        results = self._apply_source_weighting(results, query_type)
+        
         # Filter and re-rank results based on role relevance
         filtered_results = self._filter_by_role_relevance(results, query_context.user_role)
         
+        # Log final selection
+        logger.info(f"\nFinal selection: {len(filtered_results[:8])} documents")
+        logger.info(f"Source breakdown:")
+        source_counts = {}
+        for doc in filtered_results[:8]:
+            source = doc.get('metadata', {}).get('source', 'unknown')
+            source_counts[source] = source_counts.get(source, 0) + 1
+        for source, count in sorted(source_counts.items()):
+            logger.info(f"  {source}: {count} documents")
+        logger.info(f"{'='*80}\n")
+        
         # Return top 8 results
         return filtered_results[:8]
+
+    def _detect_query_type(self, query: str) -> str:
+        """
+        Detect whether query is code-related or documentation-related
+        Returns: 'code', 'documentation', or 'general'
+        """
+        query_lower = query.lower()
+        
+        # Code-related keywords
+        code_keywords = [
+            'code', 'function', 'class', 'method', 'api', 'endpoint', 'implementation',
+            'implement', 'deploy', 'configure', 'setup', 'install', 'repository',
+            'commit', 'branch', 'pull request', 'merge', 'build', 'compile',
+            'debug', 'test', 'unit test', 'integration', 'library', 'package',
+            'module', 'import', 'export', 'variable', 'parameter', 'return',
+            'syntax', 'algorithm', 'data structure', 'performance', 'optimize',
+            'refactor', 'codebase', 'source code', 'programming', 'script'
+        ]
+        
+        # Documentation/architecture keywords
+        doc_keywords = [
+            'architecture', 'diagram', 'design', 'workflow', 'process',
+            'documentation', 'document', 'specification', 'requirement',
+            'plan', 'planning', 'roadmap', 'strategy', 'overview',
+            'concept', 'approach', 'philosophy', 'guideline', 'standard',
+            'policy', 'procedure', 'protocol', 'framework', 'structure',
+            'system design', 'high-level', 'component', 'integration',
+            'project', 'epic', 'story', 'task', 'ticket', 'issue'
+        ]
+        
+        # Count keyword matches
+        code_score = sum(1 for keyword in code_keywords if keyword in query_lower)
+        doc_score = sum(1 for keyword in doc_keywords if keyword in query_lower)
+        
+        # Determine query type with threshold
+        if code_score > doc_score and code_score >= 1:
+            logger.info(f"Query classified as CODE-related (score: {code_score} vs {doc_score})")
+            return 'code'
+        elif doc_score > code_score and doc_score >= 1:
+            logger.info(f"Query classified as DOCUMENTATION-related (score: {doc_score} vs {code_score})")
+            return 'documentation'
+        else:
+            logger.info(f"Query classified as GENERAL (code: {code_score}, doc: {doc_score})")
+            return 'general'
+    
+    def _apply_source_weighting(self, results: List[Dict], query_type: str) -> List[Dict]:
+        """
+        Apply source weighting based on query type
+        Boost GitHub sources for code queries, Confluence/Jira for documentation queries
+        """
+        if query_type == 'general':
+            return results  # No weighting for general queries
+        
+        for result in results:
+            metadata = result.get('metadata', {})
+            source = metadata.get('source', '').lower()
+            
+            # Initialize source weight
+            source_weight = 0.0
+            
+            if query_type == 'code':
+                # Boost GitHub and repository sources for code queries
+                if 'github' in source or 'repository' in source or 'repo' in source:
+                    source_weight = 0.3  # Significant boost for GitHub
+                    logger.debug(f"Boosting GitHub source for code query: {metadata.get('file_path', 'unknown')}")
+                elif 'confluence' in source or 'jira' in source:
+                    source_weight = -0.1  # Slight penalty for doc sources
+                    
+            elif query_type == 'documentation':
+                # Boost Confluence and Jira sources for documentation queries
+                if 'confluence' in source or 'jira' in source:
+                    source_weight = 0.3  # Significant boost for Confluence/Jira
+                    logger.debug(f"Boosting Confluence/Jira source for doc query: {metadata.get('title', 'unknown')}")
+                elif 'github' in source or 'repository' in source:
+                    source_weight = -0.1  # Slight penalty for code sources
+            
+            # Store the source weight for later use in ranking
+            result['source_weight'] = source_weight
+        
+        return results
 
     def _filter_by_role_relevance(self, results: List[Dict], user_role: UserRole) -> List[Dict]:
         """Filter and re-rank results based on role relevance"""
@@ -378,8 +481,11 @@ class AIEngine:
             # Add role score to result (normalize by content length to avoid bias)
             result['role_relevance_score'] = role_score / max(len(content.split()), 1)
         
-        # Sort by combined score (similarity + role relevance)
-        results.sort(key=lambda x: (1 - x['distance']) + x.get('role_relevance_score', 0), reverse=True)
+        # Sort by combined score (similarity + role relevance + source weight)
+        results.sort(
+            key=lambda x: (1 - x['distance']) + x.get('role_relevance_score', 0) + x.get('source_weight', 0), 
+            reverse=True
+        )
         
         return results
 
@@ -387,24 +493,64 @@ class AIEngine:
         """Generate response using AWS Bedrock API"""
         
         try:
+            # Add comprehensive system instruction
+            system_instruction = """You are an expert AI assistant for organizational knowledge management. Your role is to provide accurate, helpful, and actionable answers based on the provided documentation.
+
+CRITICAL INSTRUCTIONS:
+1. **Only use information from the provided context** - Do not make up or hallucinate information
+2. **Be specific and actionable** - Provide concrete steps, examples, and references
+3. **Cite sources** - Reference specific documents, files, or sections when providing information
+4. **Acknowledge limitations** - If information is missing or unclear, explicitly state it
+5. **Maintain accuracy** - Technical accuracy is paramount; if unsure, say so
+6. **Respect the user's role** - Tailor complexity and focus to their perspective
+7. **Be comprehensive but concise** - Cover all relevant aspects without unnecessary verbosity
+8. **Structure your response** - Use clear formatting, bullet points, and numbered steps
+9. **Highlight critical information** - Use bold for key points and warnings
+10. **Provide context** - Explain WHY along with HOW when relevant
+11. Dont print code examples, just the text.
+
+SOURCE PRIORITIZATION BASED ON QUERY TYPE:
+- **For code-related queries** (implementation, APIs, functions, code structure, technical setup):
+  * PRIORITIZE GitHub sources, repositories, and code files
+  * Reference specific code files, functions, classes, and implementations
+  * GitHub sources should be your PRIMARY reference for technical implementation details
+  
+- **For documentation, architecture diagrams, process, and planning queries** (system design, workflows, project plans, requirements):
+  * PRIORITIZE Confluence pages and Jira tickets
+  * Reference architecture diagrams, design documents, and project documentation
+  * Confluence/Jira should be your PRIMARY reference for high-level design and process information
+
+- **When both source types are available**: Explain which source is more authoritative for the specific question and reference accordingly
+
+QUALITY STANDARDS:
+- Accuracy > Completeness > Speed
+- Clarity > Brevity
+- Actionable > Theoretical
+- Recent information > Outdated information
+- Official documentation > Informal notes
+- Right source for right question > All sources equally"""
+
             # Prepare request body based on model type
             if "anthropic.claude" in self.model:
-                # Claude format
+                # Claude format with system message
                 request_body = {
                     "anthropic_version": "bedrock-2023-05-31",
                     "max_tokens": 2000,
                     "temperature": 0.1,
                     "top_p": 0.9,
+                    "system": system_instruction,
                     "messages": [{"role": "user", "content": prompt}]
                 }
             elif "amazon.titan" in self.model:
-                # Titan format
+                # Titan format - prepend system instruction to prompt
+                full_prompt = f"{system_instruction}\n\n{prompt}"
                 request_body = {
-                    "inputText": prompt,
+                    "inputText": full_prompt,
                     "textGenerationConfig": {
                         "maxTokenCount": 2000,
                         "temperature": 0.1,
-                        "topP": 0.9
+                        "topP": 0.9,
+                        "stopSequences": []
                     }
                 }
             else:
@@ -531,15 +677,23 @@ class AIEngine:
     def _format_sources(self, retrieved_docs: List[Dict]) -> List[Dict[str, Any]]:
         """Format source information for response"""
         
+        logger.info(f"Formatting {len(retrieved_docs)} sources")
+        
         sources = []
-        for doc in retrieved_docs:
+        for idx, doc in enumerate(retrieved_docs):
             metadata = doc.get('metadata', {})
+            distance = doc.get('distance', 1)
+            
+            # Calculate similarity score (lower distance = higher similarity)
+            # Distance typically ranges from 0 (identical) to 2 (completely different)
+            similarity_score = max(0, 1 - distance)
             
             source = {
                 'type': metadata.get('source', 'unknown'),
                 'content_type': metadata.get('content_type', 'general'),
-                'similarity_score': 1 - doc.get('distance', 1),
-                'title': metadata.get('title', metadata.get('file_path', 'Unknown'))
+                'similarity_score': similarity_score,
+                'title': metadata.get('title', metadata.get('file_path', 'Unknown')),
+                'distance': distance  # Keep for debugging
             }
             
             # Add source-specific information
@@ -553,6 +707,18 @@ class AIEngine:
                 source['last_updated'] = metadata['updated_at']
             
             sources.append(source)
+            
+            # Log each source before sorting
+            logger.debug(f"  Source {idx}: distance={distance:.4f}, similarity={similarity_score:.4f}, title={source['title'][:50]}")
+        
+        # Sort sources by similarity_score in descending order (highest confidence first)
+        logger.info(f"BEFORE SORT - First 3 similarity scores: {[s['similarity_score'] for s in sources[:3]]}")
+        sources.sort(key=lambda x: x['similarity_score'], reverse=True)
+        logger.info(f"AFTER SORT - First 3 similarity scores: {[s['similarity_score'] for s in sources[:3]]}")
+        
+        # Log the sorted order
+        for idx, s in enumerate(sources[:5]):
+            logger.info(f"  Sorted #{idx+1}: {s['title'][:50]} - similarity={s['similarity_score']:.4f}")
         
         return sources
     
